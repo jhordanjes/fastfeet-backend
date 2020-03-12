@@ -10,11 +10,11 @@ class OrderController {
   async index(req, res) {
     const orders = await Order.findAll({
       where: { canceled_at: null },
-      attributes: ['id', 'product'],
+      attributes: ['id', 'product', 'canceled_at', 'start_date', 'end_date'],
       include: [
         {
           model: Recipient,
-          attributes: ['id', 'name'],
+          attributes: ['id', 'name', 'city', 'state'],
         },
         {
           model: Deliveryman,
