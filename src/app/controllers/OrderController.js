@@ -14,10 +14,21 @@ class OrderController {
       include: [
         {
           model: Recipient,
-          attributes: ['id', 'name', 'city', 'state'],
+          as: 'recipient',
+          attributes: [
+            'id',
+            'name',
+            'street',
+            'number',
+            'cep',
+            'complement',
+            'city',
+            'state',
+          ],
         },
         {
           model: Deliveryman,
+          as: 'deliveryman',
           attributes: ['id', 'name'],
         },
       ],
@@ -110,25 +121,17 @@ class OrderController {
   }
 
   async delete(req, res) {
-    const order = await Order.findByPk(req.params.id, {
-      include: [
-        {
-          model: Recipient,
-          attributes: ['name'],
-        },
-        {
-          model: Deliveryman,
-          attributes: ['email', 'name'],
-        },
-      ],
-    });
-    if (!order) {
-      return res.status(401).json({ error: 'Order invalid' });
+    const { id } = req.params;
+
+    const orderExists = await Order.findByPk(id);
+
+    if (!orderExists) {
+      return res.status(400).json({ error: 'Order does not exist' });
     }
 
-    order.canceled_at = new Date();
-    await order.save();
-    return res.json(order);
+    await orderExists.destroy();
+
+    return res.json();
   }
 }
 

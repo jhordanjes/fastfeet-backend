@@ -28,7 +28,12 @@ routes.post('/delivery/:order_id/problems', OrderProblemController.store);
 
 routes.use(authMiddleware);
 routes.put('/users', UserController.update);
+
+routes.get('/recipients', RecipientController.index);
+routes.get('/recipients/:id', RecipientController.show);
 routes.post('/recipients', RecipientController.store);
+routes.put('/recipients/:id', RecipientController.update);
+routes.delete('/recipients/:id', RecipientController.delete);
 
 routes.get('/deliverymans', DeliverymanController.index);
 routes.post('/deliverymans', DeliverymanController.store);
