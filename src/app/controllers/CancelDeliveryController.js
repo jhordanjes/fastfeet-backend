@@ -6,18 +6,8 @@ import CancellationMail from '../jobs/CancellationMail';
 
 class CancelDeliveryController {
   async delete(req, res) {
-    const order = await Order.findByPk(req.params.id, {
-      include: [
-        {
-          model: Recipient,
-          attributes: ['name'],
-        },
-        {
-          model: Deliveryman,
-          attributes: ['email', 'name'],
-        },
-      ],
-    });
+    const order = await Order.findByPk(req.params.id);
+
     if (!order) {
       return res.status(401).json({ error: 'Order invalid' });
     }

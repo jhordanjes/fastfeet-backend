@@ -3,13 +3,13 @@ import * as Yup from 'yup';
 import Order from '../models/Order';
 import Recipient from '../models/Recipient';
 import Deliveryman from '../models/Deliveryman';
+import File from '../models/File';
 import Queue from '../../lib/Queue';
 import DeliveryMail from '../jobs/DeliveryMail';
 
 class OrderController {
   async index(req, res) {
     const orders = await Order.findAll({
-      where: { canceled_at: null },
       attributes: ['id', 'product', 'canceled_at', 'start_date', 'end_date'],
       include: [
         {
@@ -30,10 +30,31 @@ class OrderController {
           model: Deliveryman,
           as: 'deliveryman',
           attributes: ['id', 'name'],
+          include: [
+            {
+              model: File,
+              as: 'avatar',
+              attributes: ['id', 'path', 'url'],
+            },
+          ],
+        },
+	{
+          model: File,
+          as: 'signature',
+          attributes: ['id', 'path', 'url'],
         },
       ],
     });
     return res.json(orders);
+  }
+
+  async show(req, res) {
+    const { id } = req.params;
+    const order = await Order.findByPk(id, {
+      attributes: ['id', 'product', 'recipient_id', 'deliveryman_id'],
+    });
+
+    return res.json(order);
   }
 
   async store(req, res) {

@@ -1,80 +1,117 @@
 import * as Yup from 'yup';
+import { Op } from 'sequelize';
 import Recipient from '../models/Recipient';
 
 class RecipientController {
   async index(req, res) {
-    const recipients = await Recipient.findAll();
+    const { name = '', page = 1, limit = 10 } = req.query;
+
+    const recipients = await Recipient.findAll({
+      attributes: ['id', 'name', 'street', 'number', 'city', 'state'],
+      where: {
+        name: {
+          [Op.iLike]: `%${name}%`,
+        },
+      },
+      limit,
+      offset: (page - 1) * limit,
+      order: [
+        ['updated_at', 'DESC'],
+        ['id', 'ASC'],
+      ],
+    });
+
     return res.json(recipients);
-  }
-
-  async show(req, res) {
-    const { id } = req.params;
-    const recipient = await Recipient.findByPk(id);
-    if (!recipient) {
-      return res.status(400).json('Recipient not exists');
-    }
-
-    return res.json(recipient);
   }
 
   async store(req, res) {
     const schema = Yup.object().shape({
       name: Yup.string().required(),
       street: Yup.string().required(),
-      number: Yup.number().required(),
+      number: Yup.string(),
       complement: Yup.string().required(),
       state: Yup.string().required(),
       city: Yup.string().required(),
-      cep: Yup.string()
-        .required()
-        .min(8)
-        .max(8),
+      cep: Yup.string().required(),
     });
 
-    if (!(await schema.isValid(req.body))) {
-      return res.status(400).json({ error: 'Validação falhou' });
-    }
+    if (!(await schema.isValid(req.body)))
+      return res.status(400).json({ error: 'Validation fields' });
 
-    const recipient = await Recipient.create(req.body);
+    const {
+      id,
+      name,
+      street,
+      number,
+      complement,
+      state,
+      city,
+      cep,
+    } = await Recipient.create(req.body);
 
-    return res.json({ recipient });
+    return res.json({ id, name, street, number, complement, state, city, cep });
+  }
+
+  async show(req, res) {
+    const { id } = req.params;
+
+    const recipient = await Recipient.findByPk(id);
+
+    if (!recipient) return res.status(400).json({ error: 'ID not found' });
+
+    return res.json(recipient);
   }
 
   async update(req, res) {
     const schema = Yup.object().shape({
-      name: Yup.string().required(),
-      street: Yup.string().required(),
-      number: Yup.number().required(),
-      complement: Yup.string().required(),
-      state: Yup.string().required(),
-      city: Yup.string().required(),
-      cep: Yup.string()
-        .required()
-        .min(8)
-        .max(8),
+      name: Yup.string(),
+      street: Yup.string(),
+      number: Yup.string(),
+      complement: Yup.string(),
+      state: Yup.string(),
+      city: Yup.string(),
+      cep: Yup.string(),
     });
 
-    if (!(await schema.isValid(req.body))) {
-      return res.status(400).json({ error: 'Validação falhou' });
-    }
+    if (!(await schema.isValid(req.body)))
+      return res.status(400).json({ error: 'Validation fields' });
 
     const { id } = req.params;
+
     const recipient = await Recipient.findByPk(id);
-    if (!recipient) {
-      return res.status(400).json('Recipient not exists');
-    }
 
-    recipient.update(req.body);
+    if (!recipient)
+      return res.status(400).json({ error: 'Recipient not found' });
 
-    return res.json(recipient);
+    const {
+      name,
+      street,
+      number,
+      complement,
+      state,
+      city,
+      cep,
+    } = await recipient.update(req.body, { new: true });
+
+    return res.json({
+      id,
+      name,
+      street,
+      number,
+      complement,
+      state,
+      city,
+      cep,
+    });
   }
 
   async delete(req, res) {
     const { id } = req.params;
 
     const recipient = await Recipient.findByPk(id);
+
     if (!recipient) {
-      return res.status(400).json('Recipient not exists');
+      return res.status(400).json({ error: 'Recipient does not exist' });
     }
 
     await recipient.destroy();
